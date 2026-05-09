@@ -11,7 +11,7 @@ from typing import List, Set, Tuple
 # ---------- helpers ----------
 
 def should_debug():
-    log_level = os.environ.get("PLEXCACHE_LOG_LEVEL", "info").lower()
+    log_level = os.environ.get("DECKMOVER_LOG_LEVEL", "info").lower()
     return log_level == "debug"
 
 def debug_print(*args, **kwargs):
@@ -241,23 +241,23 @@ def get_ondeck_items(db_path: str, max_per_user: int, include_libs: Set[str], on
 
 def main():
     # Database path
-    plexdb_root = os.environ.get("PLEXCACHE_PLEXDB_PATH", "/plexdb")
+    plexdb_root = os.environ.get("DECKMOVER_PLEXDB_PATH", "/plexdb")
     db_path = os.path.join(plexdb_root, "Library/Application Support/Plex Media Server/Plug-in Support/Databases/com.plexapp.plugins.library.db")
     
     if not os.path.exists(db_path):
         print(f"[ERROR] Plex database not found at: {db_path}", file=sys.stderr)
-        print("[ERROR] Ensure PLEXCACHE_PLEXDB_PATH is set correctly and mounted", file=sys.stderr)
+        print("[ERROR] Ensure DECKMOVER_PLEXDB_PATH is set correctly and mounted", file=sys.stderr)
         sys.exit(2)
     
     # Configuration
-    ondeck_enabled = env_bool("PLEXCACHE_ONDECK", True)
-    ondeck_count = env_int("PLEXCACHE_ONDECK_COUNT", 10)
-    max_items = env_int("PLEXCACHE_MAX_ITEMS", 100)
+    ondeck_enabled = env_bool("DECKMOVER_ONDECK", True)
+    ondeck_count = env_int("DECKMOVER_ONDECK_COUNT", 10)
+    max_items = env_int("DECKMOVER_MAX_ITEMS", 100)
     
     include_libs = set(env_list("PLEX_LIBRARIES"))
-    only_libs = set(env_list("PLEXCACHE_LIBRARIES_ONLY"))
+    only_libs = set(env_list("DECKMOVER_LIBRARIES_ONLY"))
     
-    array_root = os.environ.get("PLEXCACHE_ARRAY_ROOT", "/mnt/user0")
+    array_root = os.environ.get("DECKMOVER_ARRAY_ROOT", "/mnt/user0")
     
     # Collect items
     items = []

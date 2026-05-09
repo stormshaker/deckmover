@@ -10,9 +10,9 @@ docker build \
   --build-arg VERSION="$V" \
   --build-arg VCS_REF="$R" \
   --build-arg BUILD_DATE="$D" \
-  -t "plexcache:$V" \
-  -t plexcache:local \
+  -t "deckmover:$V" \
+  -t deckmover:local \
   .
 
-echo "Built tags: plexcache:$V and plexcache:local"
-echo "Tip: set the Unraid template Repository to plexcache:$V for a visible version."
+echo "Built tags: deckmover:$V and deckmover:local"
+echo "Tip: set the Unraid template Repository to deckmover:$V for a visible version."

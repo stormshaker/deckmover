@@ -1,9 +1,9 @@
 #!/bin/bash
 set -Eeuo pipefail
 
-ARRAY_ROOT="${PLEXCACHE_ARRAY_ROOT:-/mnt/user0}"
-CACHE_ROOT="${PLEXCACHE_CACHE_ROOT:-/mnt/cache}"
-LOG="${PLEXCACHE_LOG:-/logs/plexcache.log}"
+ARRAY_ROOT="${DECKMOVER_ARRAY_ROOT:-/mnt/user0}"
+CACHE_ROOT="${DECKMOVER_CACHE_ROOT:-/mnt/cache}"
+LOG="${DECKMOVER_LOG:-/logs/deckmover.log}"
 PUID="${PUID:-99}"
 PGID="${PGID:-100}"
 umask 0002
@@ -14,7 +14,7 @@ mkdir -p "$(dirname "$LOG")"
 if [ -f "$LOG" ]; then
     TIMESTAMP=$(date +%Y%m%d-%H%M%S)
     # Move to timestamped backup (preserves original timestamps)
-    # Change /logs/plexcache.log to /logs/plexcache.20251014-031000.log
+    # Change /logs/deckmover.log to /logs/deckmover.20251014-031000.log
     LOG_BASE="${LOG%.*}"  # Remove .log extension
     mv "$LOG" "${LOG_BASE}.${TIMESTAMP}.log"
     touch "$LOG"  # create new empty log file
@@ -33,7 +33,7 @@ to_bool() {
 }
 
 # Logging levels: error=0, warn=1, info=2, debug=3
-LOG_LEVEL="${PLEXCACHE_LOG_LEVEL:-info}"
+LOG_LEVEL="${DECKMOVER_LOG_LEVEL:-info}"
 case "${LOG_LEVEL,,}" in
   error) LOG_LEVEL_NUM=0 ;;
   warn|warning) LOG_LEVEL_NUM=1 ;;
@@ -50,10 +50,10 @@ log_debug() { [ "$LOG_LEVEL_NUM" -ge 3 ] && echo "[DEBUG] $*" >> "$LOG" || true;
 # Note: startup_summary and completion_summary functions moved to entrypoint.sh
 
 DRY="$(to_bool "${RSYNC_DRY_RUN:-}")"
-WARM_MOVE="$(to_bool "${PLEXCACHE_WARM_MOVE:-true}")"             # <<— new: move during warm by default
-WARM_SIDECARS="$(to_bool "${PLEXCACHE_WARM_SIDECARS:-true}")"     # <<— copy/move sidecars with media
-SKIP_IF_PLAYING_WARM="$(to_bool "${PLEXCACHE_SKIP_IF_PLAYING_WARM:-true}")"
-MOVE_BACK="$(to_bool "${PLEXCACHE_MOVE_WATCHED_BACK:-false}")"    # <<— move watched items back to array
+WARM_MOVE="$(to_bool "${DECKMOVER_WARM_MOVE:-true}")"
+WARM_SIDECARS="$(to_bool "${DECKMOVER_WARM_SIDECARS:-true}")"
+SKIP_IF_PLAYING_WARM="$(to_bool "${DECKMOVER_SKIP_IF_PLAYING_WARM:-true}")"
+MOVE_BACK="$(to_bool "${DECKMOVER_MOVE_WATCHED_BACK:-false}")"
 
 # Note: startup summary now handled by entrypoint.sh
 
@@ -68,40 +68,25 @@ RSYNC_CMD+=(--chown=${PUID}:${PGID})
 # -------------------------------
 # Build the selection list (paths)
 # -------------------------------
-LIST_CMD='python /opt/plexcache/selector_sqlite.py'
+LIST_CMD='python3 /opt/deckmover/selector_sqlite.py'
 if id -u abc >/dev/null 2>&1; then
   LIST_OUT="$(su abc -s /bin/sh -c "$LIST_CMD" 2>> "$LOG" || true)"
 else
   LIST_OUT="$(bash -lc "$LIST_CMD" 2>> "$LOG" || true)"
 fi
 
-# Optional: build a set of currently playing files to avoid moving out from under a stream
+# Active session detection requires the Plex API (not installed); session data is
+# not stored in the SQLite database. SKIP_IF_PLAYING_WARM is kept as a config
+# knob for future API integration, but for now we leave the set empty so all
+# candidate files are evaluated.
 PLAYING_SET=""
-if [ "$SKIP_IF_PLAYING_WARM" = "1" ]; then
-  PLAYING_SET="$(python - <<'PY' 2>/dev/null || true
-import os, requests
-from plexapi.server import PlexServer
-try:
-  s=requests.Session(); s.verify=str(os.environ.get("PLEX_SSL_VERIFY","true")).lower() in ("1","true","yes","on")
-  p=PlexServer(os.environ["PLEX_BASEURL"], os.environ["PLEX_TOKEN"], session=s)
-  seen=set()
-  for sess in p.sessions():
-    for m in getattr(sess,"media",[]) or []:
-      for part in getattr(m,"parts",[]) or []:
-        if part.file: seen.add(part.file)
-  # print as newline list
-  for f in seen: print(f)
-except Exception: pass
-PY
-)"
-fi
 
 # -----------------------------------------
 # Free-space guard: size, trim, then copy
 # -----------------------------------------
-RESERVE_GB="${PLEXCACHE_RESERVE_GB:-10}"
-KEEP_FREE_GB="${PLEXCACHE_MIN_FREE_GB:-20}"
-TRIM_PLAN="$(to_bool "${PLEXCACHE_TRIM_PLAN:-true}")"
+RESERVE_GB="${DECKMOVER_RESERVE_GB:-10}"
+KEEP_FREE_GB="${DECKMOVER_MIN_FREE_GB:-20}"
+TRIM_PLAN="$(to_bool "${DECKMOVER_TRIM_PLAN:-true}")"
 
 # Collect existing sources with sizes first
 log_info "Building file list from selector..."
@@ -150,7 +135,7 @@ log_info "  Available after reserve: $(numfmt --to=iec $ALLOW)"
 
 if [ "$ALLOW" -le 0 ]; then
   log_warn "Not enough free space even before copying. Aborting."
-  log_info "PlexCache run ended: $(date)"
+  log_info "DeckMover run ended: $(date)"
   exit 0
 fi
 
@@ -170,7 +155,7 @@ for rec in "${ALL[@]}"; do
       continue
     else
       log_warn "Plan exceeds cache allowance. Aborting."
-      log_info "PlexCache run ended: $(date)"
+      log_info "DeckMover run ended: $(date)"
       exit 0
     fi
   fi
@@ -258,7 +243,7 @@ log_info "Warm/copy phase complete: $COPIED_COUNT copied"
 BACK_COUNT=0
 if [ "$MOVE_BACK" = "1" ]; then
   log_info "Starting move-back phase (watched items)..."
-  BACK_LIST="$(python /opt/plexcache/selector_watched_back_sqlite.py 2>> "$LOG" || true)"
+  BACK_LIST="$(python3 /opt/deckmover/selector_watched_back_sqlite.py 2>> "$LOG" || true)"
   for cache_src in $BACK_LIST; do
     [ -z "$cache_src" ] && continue
     array_dst="${cache_src/$CACHE_ROOT/$ARRAY_ROOT}"
@@ -273,7 +258,7 @@ if [ "$MOVE_BACK" = "1" ]; then
     "${RSYNC_CMD[@]}" "$cache_src" "$array_dst"
     BACK_COUNT=$((BACK_COUNT + 1))
 
-    if [ "$(to_bool "${PLEXCACHE_MOVE_BACK_SIDECARS:-true}")" = "1" ]; then
+    if [ "$(to_bool "${DECKMOVER_MOVE_BACK_SIDECARS:-true}")" = "1" ]; then
       base="${cache_src%.*}"
       for ext in srt ass sub nfo jpg png; do
         sc="${base}.${ext}"
@@ -291,7 +276,7 @@ if [ "$MOVE_BACK" = "1" ]; then
         log_debug "  Verify OK, removing cache copy"
         rm -f -- "$cache_src"
         # Also remove sidecars if they were moved back
-        if [ "$(to_bool "${PLEXCACHE_MOVE_BACK_SIDECARS:-true}")" = "1" ]; then
+        if [ "$(to_bool "${DECKMOVER_MOVE_BACK_SIDECARS:-true}")" = "1" ]; then
           base="${cache_src%.*}"
           for ext in srt ass sub nfo jpg png; do
             sc="${base}.${ext}"
@@ -309,7 +294,7 @@ if [ "$MOVE_BACK" = "1" ]; then
   log_info "Move-back phase complete: $BACK_COUNT items moved back to array"
   
   # Clean up orphaned sidecar files (main video already moved back but sidecars left behind)
-  if [ "$(to_bool "${PLEXCACHE_MOVE_BACK_SIDECARS:-true}")" = "1" ]; then
+  if [ "$(to_bool "${DECKMOVER_MOVE_BACK_SIDECARS:-true}")" = "1" ]; then
     log_info "Checking for orphaned sidecar files on cache..."
     ORPHAN_COUNT=0
     
@@ -320,7 +305,7 @@ import os
 import sys
 import sqlite3
 
-plexdb_root = os.environ.get('PLEXCACHE_PLEXDB_PATH', '/plexdb')
+plexdb_root = os.environ.get('DECKMOVER_PLEXDB_PATH', '/plexdb')
 db_path = os.path.join(plexdb_root, 'Library/Application Support/Plex Media Server/Plug-in Support/Databases/com.plexapp.plugins.library.db')
 
 if not os.path.exists(db_path):
@@ -356,8 +341,8 @@ for path in paths:
             break
     
     # Convert array path to cache path
-    array_root = os.environ.get('PLEXCACHE_ARRAY_ROOT', '/mnt/user0')
-    cache_root = os.environ.get('PLEXCACHE_CACHE_ROOT', '/mnt/cache')
+    array_root = os.environ.get('DECKMOVER_ARRAY_ROOT', '/mnt/user0')
+    cache_root = os.environ.get('DECKMOVER_CACHE_ROOT', '/mnt/cache')
     cache_path = mapped_path.replace(array_root, cache_root, 1)
     
     print(cache_path)

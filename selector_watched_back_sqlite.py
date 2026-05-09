@@ -12,7 +12,7 @@ from typing import List, Set
 # ---------- helpers ----------
 
 def should_debug():
-    log_level = os.environ.get("PLEXCACHE_LOG_LEVEL", "info").lower()
+    log_level = os.environ.get("DECKMOVER_LOG_LEVEL", "info").lower()
     return log_level == "debug"
 
 def debug_print(*args, **kwargs):
@@ -89,7 +89,8 @@ def get_watched_items(db_path: str, include_libs: Set[str], only_libs: Set[str],
             mi.id as metadata_id,
             mi.title,
             ls.name as library_name,
-            mp.file as file_path
+            mp.file as file_path,
+            (SELECT MAX(miv_age.viewed_at) FROM metadata_item_views miv_age WHERE miv_age.guid = mi.guid) as last_viewed_at
         FROM metadata_items mi
         JOIN library_sections ls ON mi.library_section_id = ls.id
         JOIN media_items med ON mi.id = med.metadata_item_id
@@ -185,13 +186,19 @@ def get_watched_items(db_path: str, include_libs: Set[str], only_libs: Set[str],
         
         for row in cursor.fetchall():
             library_name = row['library_name']
-            
+
             # Apply library filters
             if include_libs and library_name not in include_libs:
                 continue
             if only_libs and library_name not in only_libs:
                 continue
-            
+
+            # Apply age filter: skip items viewed more recently than the cutoff
+            if cutoff_timestamp is not None:
+                last_viewed = row['last_viewed_at']
+                if last_viewed is not None and last_viewed > cutoff_timestamp:
+                    continue
+
             file_path = row['file_path']
             
             # Map to host path
@@ -224,55 +231,32 @@ def get_watched_items(db_path: str, include_libs: Set[str], only_libs: Set[str],
     
     return results
 
-def get_playing_files(db_path: str) -> Set[str]:
-    """
-    Query currently playing files from sessions table.
-    Note: This may not be available in SQLite - Plex stores active sessions in memory/redis.
-    We'll return an empty set for now and rely on API fallback if needed.
-    """
-    # Plex doesn't store active playback sessions in the main SQLite database
-    # They're in memory/redis, so we can't query them via SQLite
-    # The API selector handles this better
-    return set()
-
 # ---------- main ----------
 
 def main():
     # Database path
-    plexdb_root = os.environ.get("PLEXCACHE_PLEXDB_PATH", "/plexdb")
+    plexdb_root = os.environ.get("DECKMOVER_PLEXDB_PATH", "/plexdb")
     db_path = os.path.join(plexdb_root, "Library/Application Support/Plex Media Server/Plug-in Support/Databases/com.plexapp.plugins.library.db")
     
     if not os.path.exists(db_path):
         print(f"[ERROR] Plex database not found at: {db_path}", file=sys.stderr)
-        print("[ERROR] Ensure PLEXCACHE_PLEXDB_PATH is set correctly and mounted", file=sys.stderr)
+        print("[ERROR] Ensure DECKMOVER_PLEXDB_PATH is set correctly and mounted", file=sys.stderr)
         sys.exit(2)
     
     # Configuration
-    array_root = os.environ.get("PLEXCACHE_ARRAY_ROOT", "/mnt/user0").rstrip("/")
-    cache_root = os.environ.get("PLEXCACHE_CACHE_ROOT", "/mnt/cache").rstrip("/")
-    
-    skip_if_playing = env_bool("PLEXCACHE_SKIP_IF_PLAYING", True)
-    min_age_days = env_int("PLEXCACHE_MOVE_BACK_MIN_AGE_DAYS", 0)
+    array_root = os.environ.get("DECKMOVER_ARRAY_ROOT", "/mnt/user0").rstrip("/")
+    cache_root = os.environ.get("DECKMOVER_CACHE_ROOT", "/mnt/cache").rstrip("/")
+
+    min_age_days = env_int("DECKMOVER_MOVE_BACK_MIN_AGE_DAYS", 0)
     include_libs = set(env_list("PLEX_LIBRARIES"))
-    only_libs = set(env_list("PLEXCACHE_LIBRARIES_ONLY"))
-    
-    # Get playing files (empty for SQLite, but keeping structure for consistency)
-    playing_files = set()
-    if skip_if_playing:
-        # SQLite doesn't have session info, but we keep the structure
-        # In practice, the main run_once.sh also checks for playing files
-        playing_files = get_playing_files(db_path)
-    
-    # Get watched items on cache
-    watched_items = get_watched_items(db_path, include_libs, only_libs, 
+    only_libs = set(env_list("DECKMOVER_LIBRARIES_ONLY"))
+
+    watched_items = get_watched_items(db_path, include_libs, only_libs,
                                      min_age_days, cache_root, array_root)
-    
-    # Deduplicate and filter out playing files
+
     seen = set()
     for cache_path in watched_items:
         if cache_path in seen:
-            continue
-        if skip_if_playing and cache_path in playing_files:
             continue
         seen.add(cache_path)
         print(cache_path)
