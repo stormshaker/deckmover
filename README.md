@@ -126,46 +126,14 @@ Dockerfile                                 # Installs Python, rsync, and copies 
 
 ## Unraid template
 
-Save as `/boot/config/plugins/dockerMan/templates-user/my-DeckMover.xml`
+A ready-to-use template file is included in the repo: [`my-DeckMover.xml`](my-DeckMover.xml)
 
-Key template structure:
-
-* `<Container version="2">`
-* Each `<Config …/>` sits directly under `<Container>`
-* Add an **Icon** path if you want a logo (e.g. `https://raw.githubusercontent.com/stormshaker/deckmover/master/icon.png`)
-
-Example minimal template:
-
-```xml
-<?xml version="1.0"?>
-<Container version="2">
-  <Name>DeckMover</Name>
-  <Repository>ghcr.io/stormshaker/deckmover:latest</Repository>
-  <Registry>https://ghcr.io</Registry>
-  <Network>bridge</Network>
-  <Privileged>false</Privileged>
-  <Support>https://github.com/stormshaker/deckmover</Support>
-  <Project>https://github.com/stormshaker/deckmover</Project>
-  <Overview>Warm Unraid cache with Plex Continue Watching items using direct SQLite database access.</Overview>
-  <Category>MediaApp:Other MediaServer:Other</Category>
-
-  <Config Name="Array Root" Target="/mnt/user0" Default="/mnt/user0" Mode="rw" Description="Source (array only)" Type="Path" Display="always" Required="true" Mask="false">/mnt/user0</Config>
-  <Config Name="Cache Root" Target="/mnt/cache" Default="/mnt/cache" Mode="rw" Description="Destination (cache)" Type="Path" Display="always" Required="true" Mask="false">/mnt/cache</Config>
-  <Config Name="Config" Target="/config" Default="/mnt/user/appdata/deckmover/config" Mode="rw" Description="Config directory" Type="Path" Display="advanced" Required="true" Mask="false">/mnt/user/appdata/deckmover/config</Config>
-  <Config Name="Logs" Target="/logs" Default="/mnt/user/appdata/deckmover/logs" Mode="rw" Description="Log directory" Type="Path" Display="advanced" Required="true" Mask="false">/mnt/user/appdata/deckmover/logs</Config>
-  <Config Name="Plex Database" Target="/plexdb" Default="/mnt/user/appdata/plex" Mode="ro" Description="Plex appdata root (for SQLite access)" Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/plex</Config>
-
-  <Config Name="PLEX_PATH_MAP" Target="PLEX_PATH_MAP" Default="/data=/mnt/user" Mode="" Description="Path mapping from Plex to Unraid (e.g. /data=/mnt/user)" Type="Variable" Display="always" Required="true" Mask="false">/data=/mnt/user</Config>
-  <Config Name="PUID" Target="PUID" Default="99" Mode="" Description="User ID (99=nobody)" Type="Variable" Display="advanced" Required="true" Mask="false">99</Config>
-  <Config Name="PGID" Target="PGID" Default="100" Mode="" Description="Group ID (100=users)" Type="Variable" Display="advanced" Required="true" Mask="false">100</Config>
-
-  <Config Name="DECKMOVER_ONDECK" Target="DECKMOVER_ONDECK" Default="true" Mode="" Description="Include On Deck items" Type="Variable" Display="always" Required="false" Mask="false">true</Config>
-  <Config Name="DECKMOVER_ONDECK_COUNT" Target="DECKMOVER_ONDECK_COUNT" Default="10" Mode="" Description="Max On Deck items per user" Type="Variable" Display="always" Required="false" Mask="false">10</Config>
-  <Config Name="DECKMOVER_WARM_MOVE" Target="DECKMOVER_WARM_MOVE" Default="true" Mode="" Description="Delete array source after copy (prevents duplicates)" Type="Variable" Display="always" Required="false" Mask="false">true</Config>
-  <Config Name="DECKMOVER_TIME" Target="DECKMOVER_TIME" Default="03:15" Mode="" Description="Daily run time (HH:MM)" Type="Variable" Display="always" Required="false" Mask="false">03:15</Config>
-  <Config Name="DECKMOVER_LOG_LEVEL" Target="DECKMOVER_LOG_LEVEL" Default="info" Mode="" Description="Log level (error, warn, info, debug)" Type="Variable" Display="advanced" Required="false" Mask="false">info</Config>
-</Container>
+Download it and place it at:
 ```
+/boot/config/plugins/dockerMan/templates-user/my-DeckMover.xml
+```
+
+Then go to Unraid GUI → Docker → Add Container — it will appear as a template with all variables pre-filled.
 
 ---
 

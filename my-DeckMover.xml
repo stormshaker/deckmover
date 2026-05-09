@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>DeckMover</Name>
+  <Repository>ghcr.io/stormshaker/deckmover:latest</Repository>
+  <Registry>https://ghcr.io</Registry>
+  <Network>bridge</Network>
+  <Privileged>false</Privileged>
+  <Support>https://github.com/stormshaker/deckmover</Support>
+  <Project>https://github.com/stormshaker/deckmover</Project>
+  <Overview>Warm Unraid cache with Plex Continue Watching items using direct SQLite database access. Optionally moves watched items back to the array.</Overview>
+  <Category>MediaApp:Other MediaServer:Other</Category>
+  <Icon>https://raw.githubusercontent.com/stormshaker/deckmover/main/icon.png</Icon>
+
+  <Config Name="Array Root" Target="/mnt/user0" Default="/mnt/user0" Mode="rw" Description="Source (array only, not user share)" Type="Path" Display="always" Required="true" Mask="false">/mnt/user0</Config>
+  <Config Name="Cache Root" Target="/mnt/cache" Default="/mnt/cache" Mode="rw" Description="Destination cache drive" Type="Path" Display="always" Required="true" Mask="false">/mnt/cache</Config>
+  <Config Name="Plex Database" Target="/plexdb" Default="/mnt/user/appdata/plex" Mode="ro" Description="Plex appdata root (must contain Library/Application Support/Plex Media Server/...)" Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/plex</Config>
+  <Config Name="Config" Target="/config" Default="/mnt/user/appdata/deckmover/config" Mode="rw" Description="Config directory" Type="Path" Display="advanced" Required="true" Mask="false">/mnt/user/appdata/deckmover/config</Config>
+  <Config Name="Logs" Target="/logs" Default="/mnt/user/appdata/deckmover/logs" Mode="rw" Description="Log directory" Type="Path" Display="advanced" Required="true" Mask="false">/mnt/user/appdata/deckmover/logs</Config>
+
+  <Config Name="PLEX_PATH_MAP" Target="PLEX_PATH_MAP" Default="/data=/mnt/user" Mode="" Description="Path mapping from Plex container paths to Unraid host paths. Format: /plex_path=/host_path. Comma-separated for multiple mappings." Type="Variable" Display="always" Required="true" Mask="false">/data=/mnt/user</Config>
+  <Config Name="PLEX_LIBRARIES" Target="PLEX_LIBRARIES" Default="Movies,TV Shows" Mode="" Description="Comma-separated list of Plex library names to include. Leave blank for all libraries." Type="Variable" Display="always" Required="false" Mask="false">Movies,TV Shows</Config>
+  <Config Name="PUID" Target="PUID" Default="99" Mode="" Description="User ID for file ownership (99 = nobody on Unraid)" Type="Variable" Display="advanced" Required="true" Mask="false">99</Config>
+  <Config Name="PGID" Target="PGID" Default="100" Mode="" Description="Group ID for file ownership (100 = users on Unraid)" Type="Variable" Display="advanced" Required="true" Mask="false">100</Config>
+
+  <Config Name="DECKMOVER_ONDECK" Target="DECKMOVER_ONDECK" Default="true" Mode="" Description="Include On Deck / Continue Watching items" Type="Variable" Display="always" Required="false" Mask="false">true</Config>
+  <Config Name="DECKMOVER_ONDECK_COUNT" Target="DECKMOVER_ONDECK_COUNT" Default="10" Mode="" Description="Max On Deck items per user" Type="Variable" Display="always" Required="false" Mask="false">10</Config>
+  <Config Name="DECKMOVER_WARM_MOVE" Target="DECKMOVER_WARM_MOVE" Default="true" Mode="" Description="Delete array source after verified copy to cache. Prevents duplicates in user shares." Type="Variable" Display="always" Required="false" Mask="false">true</Config>
+  <Config Name="DECKMOVER_WARM_SIDECARS" Target="DECKMOVER_WARM_SIDECARS" Default="true" Mode="" Description="Copy subtitle and metadata sidecar files alongside media" Type="Variable" Display="advanced" Required="false" Mask="false">true</Config>
+  <Config Name="DECKMOVER_MOVE_WATCHED_BACK" Target="DECKMOVER_MOVE_WATCHED_BACK" Default="false" Mode="" Description="Move fully watched items from cache back to array" Type="Variable" Display="always" Required="false" Mask="false">false</Config>
+  <Config Name="DECKMOVER_MOVE_BACK_MIN_AGE_DAYS" Target="DECKMOVER_MOVE_BACK_MIN_AGE_DAYS" Default="0" Mode="" Description="Only move back items watched more than N days ago. 0 = any age." Type="Variable" Display="advanced" Required="false" Mask="false">0</Config>
+  <Config Name="DECKMOVER_MOVE_BACK_SIDECARS" Target="DECKMOVER_MOVE_BACK_SIDECARS" Default="true" Mode="" Description="Move sidecar files alongside media during move-back" Type="Variable" Display="advanced" Required="false" Mask="false">true</Config>
+  <Config Name="DECKMOVER_MIN_FREE_GB" Target="DECKMOVER_MIN_FREE_GB" Default="20" Mode="" Description="Minimum free space to leave on cache after run (GB)" Type="Variable" Display="advanced" Required="false" Mask="false">20</Config>
+  <Config Name="DECKMOVER_RESERVE_GB" Target="DECKMOVER_RESERVE_GB" Default="10" Mode="" Description="Additional buffer on top of MIN_FREE that is never used (GB)" Type="Variable" Display="advanced" Required="false" Mask="false">10</Config>
+  <Config Name="DECKMOVER_TRIM_PLAN" Target="DECKMOVER_TRIM_PLAN" Default="true" Mode="" Description="If plan exceeds available space, trim it to fit. If false, abort the run instead." Type="Variable" Display="advanced" Required="false" Mask="false">true</Config>
+  <Config Name="DECKMOVER_MAX_ITEMS" Target="DECKMOVER_MAX_ITEMS" Default="100" Mode="" Description="Hard cap on total items across all users" Type="Variable" Display="advanced" Required="false" Mask="false">100</Config>
+  <Config Name="DECKMOVER_TIME" Target="DECKMOVER_TIME" Default="03:15" Mode="" Description="Daily run time (HH:MM). Leave blank if using DECKMOVER_CRON or DECKMOVER_RUN_IMMEDIATELY." Type="Variable" Display="always" Required="false" Mask="false">03:15</Config>
+  <Config Name="DECKMOVER_CRON" Target="DECKMOVER_CRON" Default="" Mode="" Description="Cron expression for scheduling (e.g. 0 */2 * * * for every 2 hours). Overrides DECKMOVER_TIME." Type="Variable" Display="advanced" Required="false" Mask="false"></Config>
+  <Config Name="DECKMOVER_RUN_IMMEDIATELY" Target="DECKMOVER_RUN_IMMEDIATELY" Default="false" Mode="" Description="Run once immediately then exit. Use with RSYNC_DRY_RUN=true for testing." Type="Variable" Display="advanced" Required="false" Mask="false">false</Config>
+  <Config Name="DECKMOVER_LOG_LEVEL" Target="DECKMOVER_LOG_LEVEL" Default="info" Mode="" Description="Log verbosity: error, warn, info, or debug" Type="Variable" Display="advanced" Required="false" Mask="false">info</Config>
+  <Config Name="RSYNC_DRY_RUN" Target="RSYNC_DRY_RUN" Default="false" Mode="" Description="Simulate run without modifying any files. Use with DECKMOVER_RUN_IMMEDIATELY=true for testing." Type="Variable" Display="advanced" Required="false" Mask="false">false</Config>
+</Container>
