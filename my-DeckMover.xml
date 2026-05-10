@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <Container version="2">
   <Name>DeckMover</Name>
-  <Repository>ghcr.io/stormshaker/deckmover:0.1.1-webui</Repository>
+  <Repository>ghcr.io/stormshaker/deckmover:0.1.2-webui</Repository>
   <Registry>https://ghcr.io</Registry>
   <Network>bridge</Network>
   <Privileged>false</Privileged>
