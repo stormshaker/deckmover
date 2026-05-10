@@ -7,7 +7,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /opt/deckmover
 
 # install python dependencies (only what we need for SQLite)
-RUN pip install --no-cache-dir requests croniter
+RUN pip install --no-cache-dir requests croniter flask
 
 # our runtime helpers
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
@@ -17,6 +17,8 @@ RUN chmod +x /usr/local/bin/*.sh
 # Copy our SQLite selector scripts (all users via database)
 COPY selector_sqlite.py /opt/deckmover/selector_sqlite.py
 COPY selector_watched_back_sqlite.py /opt/deckmover/selector_watched_back_sqlite.py
+COPY webui.py /opt/deckmover/webui.py
+COPY icon.png /opt/deckmover/icon.png
 
 # sane defaults for Unraid
 ENV TZ=Australia/Sydney
@@ -44,6 +46,9 @@ ENV DECKMOVER_ONDECK=true
 ENV PLEX_LIBRARIES="Movies,TV Shows"
 ENV PUID=99
 ENV PGID=100
+ENV DECKMOVER_WEBUI_PORT=7575
+
+EXPOSE 7575
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 
