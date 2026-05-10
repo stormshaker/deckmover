@@ -15,6 +15,15 @@ fi
 chown -R ${PUID:-99}:${PGID:-100} /config /logs 2>/dev/null || true
 touch "$DECKMOVER_LOG" || true
 
+# Source persistent config written by the WebUI (overrides env vars)
+if [ -f /config/deckmover.env ]; then
+  echo "[deckmover] Loading settings from /config/deckmover.env"
+  set -a
+  # shellcheck disable=SC1091
+  . /config/deckmover.env
+  set +a
+fi
+
 # ---- helper functions ----
 
 to_bool() {
@@ -43,6 +52,13 @@ except Exception as e:
 
 # ---- unified run execution ----
 execute_deckmover_run () {
+  # Re-source config so WebUI edits take effect on scheduled runs too
+  if [ -f /config/deckmover.env ]; then
+    set -a
+    # shellcheck disable=SC1091
+    . /config/deckmover.env
+    set +a
+  fi
   echo "[deckmover] DeckMover run started: $(date)"
   echo "[deckmover] Log level: ${DECKMOVER_LOG_LEVEL:-info}"
   echo "[deckmover] Detailed logs: ${DECKMOVER_LOG:-/logs/deckmover.log}"
@@ -105,6 +121,9 @@ say_when () {
     echo "[deckmover] scheduler: none (one-shot only)"
   fi
 }
+
+# Start WebUI in background (non-fatal if unavailable)
+python3 /opt/deckmover/webui.py &
 
 say_when
 
