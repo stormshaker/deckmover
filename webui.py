@@ -17,7 +17,7 @@ LOG_PATH   = Path(os.environ.get('DECKMOVER_LOG', '/logs/deckmover.log'))
 LOG_DIR    = LOG_PATH.parent
 CONFIG_FILE = Path('/config/deckmover.env')
 LOCK_FILE  = Path('/tmp/deckmover_cron.lock')
-PORT       = int(os.environ.get('DECKMOVER_WEBUI_PORT', '8080'))
+PORT       = int(os.environ.get('DECKMOVER_WEBUI_PORT', '7575'))
 
 app = Flask(__name__)
 
