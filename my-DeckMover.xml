@@ -22,6 +22,5 @@
 
   <Config Name="PUID" Target="PUID" Default="99" Mode="" Description="User ID for file ownership. Use 99 (nobody) on Unraid." Type="Variable" Display="advanced" Required="true" Mask="false">99</Config>
   <Config Name="PGID" Target="PGID" Default="100" Mode="" Description="Group ID for file ownership. Use 100 (users) on Unraid." Type="Variable" Display="advanced" Required="true" Mask="false">100</Config>
-  <Config Name="TZ" Target="TZ" Default="America/New_York" Mode="" Description="Container timezone. Affects scheduling and log timestamps." Type="Variable" Display="advanced" Required="false" Mask="false">America/New_York</Config>
 
 </Container>
