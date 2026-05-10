@@ -8,11 +8,11 @@
   <Support>https://github.com/stormshaker/deckmover</Support>
   <Project>https://github.com/stormshaker/deckmover</Project>
   <Overview>Warm Unraid cache with Plex Continue Watching items using direct SQLite database access. Optionally moves watched items back to the array. All settings are configured through the built-in WebUI — open it after starting the container.</Overview>
-  <WebUI>http://[IP]:[PORT:8080]/</WebUI>
+  <WebUI>http://[IP]:[PORT:7575]/</WebUI>
   <Category>MediaApp:Other MediaServer:Other</Category>
   <Icon>https://raw.githubusercontent.com/stormshaker/deckmover/main/icon.png</Icon>
 
-  <Config Name="WebUI Port" Target="8080" Default="8080" Mode="tcp" Description="Port for the DeckMover web interface. Open this after starting the container to configure settings." Type="Port" Display="always" Required="true" Mask="false">8080</Config>
+  <Config Name="WebUI Port" Target="7575" Default="7575" Mode="tcp" Description="Port for the DeckMover web interface. Open this after starting the container to configure settings." Type="Port" Display="always" Required="true" Mask="false">7575</Config>
 
   <Config Name="Array Root" Target="/mnt/user0" Default="/mnt/user0" Mode="rw" Description="Unraid array root. Use /mnt/user0 (not /mnt/user) to bypass the user share layer." Type="Path" Display="always" Required="true" Mask="false">/mnt/user0</Config>
   <Config Name="Cache Root" Target="/mnt/cache" Default="/mnt/cache" Mode="rw" Description="Unraid cache drive root." Type="Path" Display="always" Required="true" Mask="false">/mnt/cache</Config>

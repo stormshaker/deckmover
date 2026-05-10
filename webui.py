@@ -844,9 +844,6 @@ function renderSettings() {
       </div>`;
     for (const s of g.settings) {
       const val = pending[s.key] !== undefined ? pending[s.key] : (sValues[s.key] ?? s.default);
-      const fromCfg = cfgOverrides[s.key] !== undefined;
-      const srcCls  = fromCfg ? 'src cfg' : 'src env';
-      const srcTxt  = fromCfg ? 'overridden in config file' : 'from env / default';
       html += `<div class="sr">
         <div>
           <div class="s-label">${esc(s.label)}</div>
@@ -855,7 +852,6 @@ function renderSettings() {
         </div>
         <div class="s-inp">
           ${renderInput(s, val)}
-          <span class="${srcCls}">${srcTxt}</span>
         </div>
       </div>`;
     }
