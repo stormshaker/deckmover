@@ -62,10 +62,11 @@ SETTINGS_GROUPS = [
             },
             {
                 'key': 'PLEX_PATH_MAP',
-                'label': 'Path Map',
+                'label': 'Plex Container Path Mapping',
                 'default': '/data=/mnt/user',
                 'type': 'text',
-                'help': 'Maps paths stored in the Plex database to Unraid host paths. Format: /plex_path=/host_path. Needed when Plex runs in Docker. Comma-separate multiple mappings.',
+                'placeholder': '/data=/mnt/user',
+                'help': 'Only needed if Plex runs in a Docker container. Plex records paths as it sees them inside its own container (e.g. /data/Movies/...), but DeckMover needs to find those files on Unraid. Format: /container-path=/unraid-path. Most Unraid Plex installs use /data=/mnt/user. Leave blank if Plex runs natively.',
             },
             {
                 'key': 'DECKMOVER_PLEXDB_PATH',
@@ -884,7 +885,8 @@ function renderInput(s, val) {
   if (s.type === 'number') {
     return `<input type="number" class="${ch}" value="${esc(String(val))}" oninput="onChange('${k}',this.value)">`;
   }
-  return `<input type="text" class="${ch}" value="${esc(String(val))}" oninput="onChange('${k}',this.value)">`;
+  const ph = s.placeholder ? ` placeholder="${esc(s.placeholder)}"` : '';
+  return `<input type="text" class="${ch}" value="${esc(String(val))}"${ph} oninput="onChange('${k}',this.value)">`;
 }
 
 function onChange(key, value) {
