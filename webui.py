@@ -741,6 +741,7 @@ async function pollStatus() {
     document.getElementById('dSchedule').textContent = sched || '—';
     document.getElementById('dLast').textContent = d.last_run || 'No runs yet';
     document.getElementById('btnRun').disabled = running;
+    if (!running) document.getElementById('runMsg').textContent = '';
   } catch {}
 }
 pollStatus();
