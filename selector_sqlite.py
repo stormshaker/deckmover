@@ -98,7 +98,19 @@ def get_ondeck_items(db_path: str, max_per_user: int, include_libs: Set[str], on
         account_ids = [row[0] for row in account_rows]
         account_names = {row[0]: row[1] for row in account_rows}
         debug_print(f"[DEBUG] Found {len(account_ids)} accounts, ordered by most recent activity", file=sys.stderr)
-        
+
+        ignore_accounts = {
+            a.strip().lower()
+            for a in os.environ.get("DECKMOVER_IGNORE_ACCOUNTS", "").split(",")
+            if a.strip()
+        }
+        if ignore_accounts:
+            account_ids = [
+                aid for aid in account_ids
+                if account_names.get(aid, "").lower() not in ignore_accounts
+            ]
+            debug_print(f"[DEBUG] After ignore filter: {len(account_ids)} accounts remain", file=sys.stderr)
+
         if not account_ids:
             # Fallback to admin account (id=1) if no accounts found
             account_ids = [1]

@@ -102,6 +102,13 @@ SETTINGS_GROUPS = [
                 'help': 'Hard cap on total items processed per run across all users and libraries.',
             },
             {
+                'key': 'DECKMOVER_IGNORE_ACCOUNTS',
+                'label': 'Ignore Accounts',
+                'default': '',
+                'type': 'text',
+                'help': 'Comma-separated Plex account names whose On Deck items will be skipped. Example: Alice,KidsProfile. Case-insensitive.',
+            },
+            {
                 'key': 'DECKMOVER_WARM_MOVE',
                 'label': 'Move After Warm (Delete Original)',
                 'default': 'true',
